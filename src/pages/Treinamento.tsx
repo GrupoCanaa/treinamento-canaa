@@ -1,143 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAuth } from "firebase/auth";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '../firebase';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-interface Etapa {
-  titulo: string;
-  videoUrl: string;
-}
-
-const etapas: Etapa[] = [
+const etapas = [
   {
-    titulo: "Etapa 1 - Introdução",
-    videoUrl: "https://www.youtube.com/embed/em2CTJYPHl0",
+    id: 1,
+    titulo: 'Etapa 1',
+    videos: [
+      { titulo: 'Seu Vídeo', url: 'https://www.youtube.com/embed/em2CTJYPHl0' },
+      { titulo: 'Vídeo Exemplo 2', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+      { titulo: 'Vídeo Exemplo 3', url: 'https://www.youtube.com/embed/tgbNymZ7vqY' },
+    ],
   },
   {
-    titulo: "Etapa 2 - Procedimentos",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Exemplo
+    id: 2,
+    titulo: 'Etapa 2',
+    videos: [
+      { titulo: 'Introdução à Etapa 2', url: 'https://www.youtube.com/embed/ZbZSe6N_BXs' },
+      { titulo: 'Exemplo Etapa 2.2', url: 'https://www.youtube.com/embed/oHg5SJYRHA0' },
+      { titulo: 'Exemplo Etapa 2.3', url: 'https://www.youtube.com/embed/kJQP7kiw5Fk' },
+    ],
   },
   {
-    titulo: "Etapa 3 - Atendimento",
-    videoUrl: "https://www.youtube.com/embed/9bZkp7q19f0", // Exemplo
+    id: 3,
+    titulo: 'Etapa 3',
+    videos: [
+      { titulo: 'Aula 1 Etapa 3', url: 'https://www.youtube.com/embed/3JZ_D3ELwOQ' },
+      { titulo: 'Aula 2 Etapa 3', url: 'https://www.youtube.com/embed/L_jWHffIx5E' },
+      { titulo: 'Aula 3 Etapa 3', url: 'https://www.youtube.com/embed/JGwWNGJdvx8' },
+    ],
   },
   {
-    titulo: "Etapa 4 - Encerramento",
-    videoUrl: "https://www.youtube.com/embed/tgbNymZ7vqY", // Exemplo
+    id: 4,
+    titulo: 'Etapa 4',
+    videos: [
+      { titulo: 'Finalização', url: 'https://www.youtube.com/embed/2Vv-BfVoq4g' },
+      { titulo: 'Avaliação Final', url: 'https://www.youtube.com/embed/0KSOMA3QBU0' },
+      { titulo: 'Encerramento', url: 'https://www.youtube.com/embed/CevxZvSJLk8' },
+    ],
   },
 ];
 
-const Treinamento: React.FC = () => {
-  const auth = getAuth();
+const Treinamento = () => {
+  const [user] = useAuthState(auth);
+  const [etapaLiberada, setEtapaLiberada] = useState<number | null>(null);
   const navigate = useNavigate();
-  const db = getFirestore();
-  const [liberado, setLiberado] = useState(false);
-  const [progresso, setProgresso] = useState<{ [key: string]: boolean }>({});
-  const [loading, setLoading] = useState(true);
-
-  const user = auth.currentUser;
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    if (!user) return navigate('/login');
 
-    const fetchData = async () => {
-      const userRef = doc(db, "usuarios", user.uid);
-      const docSnap = await getDoc(userRef);
+    const unsubscribe = onSnapshot(doc(db, 'usuarios', user.email!), (docSnapshot) => {
+      const data = docSnapshot.data();
+      setEtapaLiberada(data?.etapaLiberada || 0);
+    });
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setLiberado(data.liberado || false);
-        setProgresso(data.progresso || {});
-      } else {
-        await setDoc(userRef, { liberado: false, progresso: {} });
-        setLiberado(false);
-        setProgresso({});
-      }
+    return () => unsubscribe();
+  }, [user, navigate]);
 
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [user, db, navigate]);
-
-  const concluirEtapa = async (index: number) => {
-    if (!user) return;
-
-    const etapaKey = `etapa${index + 1}`;
-    const newProgresso = { ...progresso, [etapaKey]: true };
-    setProgresso(newProgresso);
-
-    const userRef = doc(db, "usuarios", user.uid);
-    await updateDoc(userRef, { progresso: newProgresso });
-  };
-
-  if (loading) return <div className="p-4">Carregando...</div>;
-
-  if (!liberado)
-    return (
-      <div className="p-4 text-red-600">
-        Acesso bloqueado. Aguarde a liberação do gestor.
-      </div>
-    );
+  if (etapaLiberada === null) {
+    return <div className="text-center mt-10">Carregando...</div>;
+  }
 
   return (
-    <div className="p-4 space-y-8">
-      <h1 className="text-2xl font-bold text-center">Treinamento</h1>
-      {etapas.map((etapa, index) => {
-        const etapaKey = `etapa${index + 1}`;
-        const etapaLiberada =
-          index === 0 || progresso[`etapa${index}`] === true;
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Treinamento</h1>
+      {etapas.map((etapa) => (
+        <div key={etapa.id} className="mb-8">
+          <h2 className="text-xl font-semibold mb-2">
+            {etapa.titulo} {etapa.id > etapaLiberada && <span className="text-red-500">(Bloqueada)</span>}
+          </h2>
 
-        return (
-          <div
-            key={etapaKey}
-            className={`border rounded-xl p-4 shadow ${
-              etapaLiberada ? "bg-white" : "bg-gray-100 opacity-60"
-            }`}
-          >
-            <h2 className="text-xl font-semibold mb-2">{etapa.titulo}</h2>
-
-            {etapaLiberada ? (
-              <>
-                <div className="aspect-w-16 aspect-h-9 mb-4">
+          {etapa.id <= etapaLiberada ? (
+            <div className="grid md:grid-cols-3 gap-4">
+              {etapa.videos.map((video, index) => (
+                <div key={index} className="bg-white rounded-lg shadow p-2">
+                  <h3 className="text-sm font-medium mb-1">{video.titulo}</h3>
                   <iframe
-                    className="w-full h-64"
-                    src={etapa.videoUrl}
-                    title={`Video ${etapa.titulo}`}
+                    width="100%"
+                    height="200"
+                    src={video.url}
+                    title={video.titulo}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   ></iframe>
                 </div>
-
-                {progresso[etapaKey] ? (
-                  <div className="text-green-600 font-semibold">
-                    ✅ Etapa concluída
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => concluirEtapa(index)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                  >
-                    Concluir Etapa
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="text-gray-500">
-                Etapa bloqueada até conclusão da anterior.
-              </div>
-            )}
-          </div>
-        );
-      })}
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">Acesso bloqueado. Aguarde a liberação do gestor.</p>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
