@@ -11,10 +11,24 @@ interface Video {
 }
 
 const etapas: Record<number, Video[]> = {
-  1: [{ id: 1, titulo: "Introdução ao Treinamento", url: "https://www.youtube.com/embed/em2CTJYPHl0" }],
-  2: [{ id: 2, titulo: "Exemplo Etapa 2 - Vídeo 1", url: "https://www.youtube.com/embed/video_exemplo2_1" }],
-  3: [{ id: 3, titulo: "Exemplo Etapa 3 - Vídeo 1", url: "https://www.youtube.com/embed/video_exemplo3_1" }],
-  4: [{ id: 4, titulo: "Exemplo Etapa 4 - Vídeo 1", url: "https://www.youtube.com/embed/video_exemplo4_1" }],
+  1: [
+    { id: 1, titulo: "Apresentação do Grupo Canaã", url: "https://www.youtube.com/embed/yYnm2hxGUeA" },
+    { id: 2, titulo: "Boas-vindas", url: "https://www.youtube.com/embed/em2CTJYPHl0" },
+    { id: 3, titulo: "Depoimentos", url: "https://www.youtube.com/embed/f0Yp5DbT-Gw" },
+    { id: 4, titulo: "Ganhos de Consultor", url: "https://www.youtube.com/embed/pbVJY25LYzI" },
+    { id: 5, titulo: "Plano de Valorização", url: "https://www.youtube.com/embed/HcKysP-3D50" },
+    { id: 6, titulo: "Regras", url: "https://www.youtube.com/embed/qZDBLUUgpmk" }
+  ],
+  2: [
+    { id: 7, titulo: "Ferramentas de Trabalho", url: "https://www.youtube.com/embed/exemplo1" },
+    { id: 8, titulo: "Como abordar o cliente", url: "https://www.youtube.com/embed/exemplo2" }
+  ],
+  3: [
+    { id: 9, titulo: "Processo de Venda", url: "https://www.youtube.com/embed/exemplo3" }
+  ],
+  4: [
+    { id: 10, titulo: "Acompanhamento e Pós-venda", url: "https://www.youtube.com/embed/exemplo4" }
+  ]
 };
 
 const Treinamento = () => {
